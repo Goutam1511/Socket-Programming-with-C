@@ -1,3 +1,17 @@
+/*
+
+fork() in C
+
+Fork system call use for creates a new process, which is called child process, which runs concurrently with process (which process called system call fork) and this process is called parent process. After a new child process created, both processes will execute the next instruction following the fork() system call. A child process uses the same pc(program counter), same CPU registers, same open files which use in the parent process.
+
+It takes no parameters and returns an integer value. Below are different values returned by fork().
+
+Negative Value: creation of a child process was unsuccessful.
+Zero: Returned to the newly created child process.
+Positive value: Returned to parent or caller. The value contains process ID of newly created child process.
+
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -55,7 +69,8 @@ int main(){
 		}
 		printf("Connection accepted from %s:%d\n", inet_ntoa(newAddr.sin_addr), ntohs(newAddr.sin_port));
 
-		if((childpid = fork()) == 0){
+		if((childpid = fork()) == 0){//This is the child process so it shouldn't use the main listening socket
+			//Also only the child should talk to newly accepted client via newSocket and main parent process shouldn't
 			close(sockfd);
 
 			while(1){
