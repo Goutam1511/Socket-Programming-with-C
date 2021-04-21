@@ -71,7 +71,7 @@ Stages for Client
 #include <netdb.h>	//For gethostbyname function
 
 #define MAX_FILE_NAME 255
-#define ALLOC_SLAB    1024
+#define EXT_SIZE      4
 
 enum errcodes {
         SOCKET_FAIL  = -1,
@@ -119,7 +119,9 @@ void error(char* msg, int errno) {
         return 0;
 }*/
 
-
+/* Find the size of a file using fseek() and ftell() and then read
+ * the file in a buffer of size found.
+ */
 int read_image_file(char *file_name, char **buffer, int *sizeof_buffer) {
         int c, i;
         int char_read = 0;
@@ -136,6 +138,15 @@ int read_image_file(char *file_name, char **buffer, int *sizeof_buffer) {
         *buffer = (char *)malloc(*sizeof_buffer);
         fread(*buffer, *sizeof_buffer, 1, fp);
         return 0;
+}
+
+int send_to_server(int sockfd, void *buffer, int size) {
+        int n = write(sockfd, buffer, size);	//Write to server
+
+        if (n < 0) {
+            error("\t Error writing to server\n", WRITE_FAIL);
+            free(buffer);
+        }
 }
 
 int main(int argc, char *argv[]){
@@ -179,29 +190,32 @@ int main(int argc, char *argv[]){
 	do {
                 int n;
                 char file_name[MAX_FILE_NAME];
+                char extension[EXT_SIZE];
                 int size_of_file = 0;
                 char *buffer     = NULL;
 
                 printf("****************** WELCOME TO IMAGE TRANSFER WITHOUT FTP *****************\n");
-                //printf("\t Please enter a image to send : ");
-		//scanf("%s", &file_name);
+                printf("\t Please enter a image to send : ");
+		scanf("%s", &file_name);
+                printf("\t Extension : ");
+		scanf("%s", &extension);
 
-                if (read_image_file("linux-bsd.gif", &buffer, &size_of_file)) {
+                if (read_image_file(file_name, &buffer, &size_of_file)) {
                         error("\t Reading Image Failed", READ_FAIL);
                         goto safe_exit;
                 }
-                //printf("------");
-                printf("%d", size_of_file);
-		n = write(sockfd, &size_of_file, sizeof(int));	//Write to server
+                printf("\t Size of file : %d\n", size_of_file);
+		n = send_to_server(sockfd, &size_of_file, sizeof(int));	//Write to server
 		if (n < 0) {
-			error("\t Error writing to server\n", WRITE_FAIL);
-                        free(buffer);
                         goto safe_exit;
                 }
-		n = write(sockfd, buffer, size_of_file);	//Write to server
+		n = send_to_server(sockfd, extension, EXT_SIZE);	//Write to server
+		if (n < 0) {
+                        goto safe_exit;
+                }
+                printf("\t Sending File\n");
+		n = send_to_server(sockfd, buffer, size_of_file);	//Write to server
 		if (n < size_of_file) {
-			error("\t Error writing to server\n", WRITE_FAIL);
-                        free(buffer);
                         goto safe_exit;
                 }
 	} while(0);

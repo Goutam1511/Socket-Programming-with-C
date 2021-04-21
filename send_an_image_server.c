@@ -120,11 +120,9 @@ int main(int argc, char *argv[]){
 	do {
 	        char *buffer    = NULL;
                 int buffer_size = 0;
-                FILE* fp = fopen("new.gif", "wb");
-
-                if (fp == NULL) {
-                    error("Error opening file");
-                }
+                char extension[4];
+                char file_name[256];
+                FILE* fp = NULL;
                
                 /*do {
                         if (read_size >= buffer_size) {
@@ -142,10 +140,19 @@ int main(int argc, char *argv[]){
                     error("Error reading size from Client");
                 printf("%d", buffer_size);
                 buffer = malloc(buffer_size);
+                n = read(newsockfd, extension, 4);//Read incoming data streams
+                if(n < 4)
+                    error("Error reading extension from Client");
                 n = read(newsockfd, buffer, buffer_size);
                 if(n < buffer_size)
-                    //error("Error reading file from Client");
-                    printf("\nF");
+                    error("Error reading file from Client");
+                
+                strcpy(file_name, "new-file");
+                strcat(file_name, extension);
+                fp = fopen(file_name, "wb");
+                if (fp == NULL) {
+                    error("Error opening file");
+                }
                 fwrite(buffer, buffer_size, 1, fp);
                 fclose(fp);
 	} while(0);
